@@ -32,7 +32,7 @@
 | [OPCODES.md](OPCODES.md) | SHIPPED | Machine-readable opcode reference table (generated from isa_unified.py) |
 | [FIR.md](FIR.md) | SHIPPED | Complete FIR v1.0 specification — type system (16 families), 54 instructions, SSA form, builder API, validation rules, bytecode encoding |
 | [A2A.md](A2A.md) | SHIPPED | Complete A2A Protocol v1.0 — 16 opcodes, 52-byte message format, INCREMENTS+2 trust engine, capability system, Signal language (28 ops) |
-| .flux.md grammar specification | Pending | Markdown-native source file grammar |
+| [FLUXMD.md](FLUXMD.md) | SHIPPED | Complete .flux.md format v1.0 specification — frontmatter schema, parsing rules, directive sections (fn:/agent:), code block dialects, AST node reference (10 types), compilation pipeline |
 | .fluxvocab interchange format | Pending | Vocabulary interchange format |
 | Conformance test vectors | Pending | Bytecode test vectors all VMs must pass |
 
