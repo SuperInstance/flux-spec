@@ -30,8 +30,8 @@
 |----------|--------|-------------|
 | [ISA.md](ISA.md) | SHIPPED | Complete ISA v1.0 specification — formats, registers, memory, execution model, all 247 opcodes |
 | [OPCODES.md](OPCODES.md) | SHIPPED | Machine-readable opcode reference table (generated from isa_unified.py) |
-| FIR specification | Pending | SSA-based IR specification |
-| A2A protocol specification | Pending | Agent-to-agent communication protocol |
+| [FIR.md](FIR.md) | SHIPPED | Complete FIR v1.0 specification — type system (16 families), 54 instructions, SSA form, builder API, validation rules, bytecode encoding |
+| [A2A.md](A2A.md) | SHIPPED | Complete A2A Protocol v1.0 — 16 opcodes, 52-byte message format, INCREMENTS+2 trust engine, capability system, Signal language (28 ops) |
 | .flux.md grammar specification | Pending | Markdown-native source file grammar |
 | .fluxvocab interchange format | Pending | Vocabulary interchange format |
 | Conformance test vectors | Pending | Bytecode test vectors all VMs must pass |
