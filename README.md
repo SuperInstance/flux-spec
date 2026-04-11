@@ -7,67 +7,59 @@
 - **FLUX ISA v1.0** — Complete instruction set architecture (opcodes, encoding, register ABI)
 - **FIR (FLUX Intermediate Representation)** — SSA-based IR specification
 - **A2A Protocol** — Agent-to-agent communication protocol
+- **Signal Language** — Agent-first-class JSON language for multi-agent coordination
 - **.flux.md Format** — Markdown-native source file grammar
 - **.fluxvocab Format** — Vocabulary interchange format
-- **Conformance Tests** — Bytecode test vectors all VMs must pass
-
-## ISA Summary
-
-- **247 opcodes** across 17 categories
-- **Variable-length instruction encoding** (1–5 bytes, little-endian)
-- **48 registers** (16 GP + 16 FP + 16 SIMD) with explicit ABI (R0=zero, R11=SP, R14=FP, R15=LR)
-- **7 instruction formats**: A (1B system) through G (5B reg+reg+imm16)
-- **Capability-based memory** with named regions, ownership, and borrowers
-- **Confidence-OPTIONAL** parallel register file for uncertainty propagation
-- **A2A primitives** for agent communication (TELL, ASK, DELEGATE, BROADCAST, etc.)
-- **Viewpoint ops** for cross-linguistic semantics (Babel's 16 V_* opcodes)
-- **Sensor ops** for edge hardware I/O (JetsonClaw1's 16 S_* opcodes)
-- **Tensor ops** for neural network primitives (matmul, conv, attention, etc.)
 
 ## Documents
 
 | Document | Status | Description |
 |----------|--------|-------------|
 | [ISA.md](ISA.md) | SHIPPED | Complete ISA v1.0 specification — formats, registers, memory, execution model, all 247 opcodes |
-| [OPCODES.md](OPCODES.md) | SHIPPED | Machine-readable opcode reference table (generated from isa_unified.py) |
+| [OPCODES.md](OPCODES.md) | SHIPPED | Machine-readable opcode reference table |
 | [FIR.md](FIR.md) | SHIPPED | Complete FIR v1.0 specification — type system (16 families), 54 instructions, SSA form, builder API, validation rules, bytecode encoding |
 | [A2A.md](A2A.md) | SHIPPED | Complete A2A Protocol v1.0 — 16 opcodes, 52-byte message format, INCREMENTS+2 trust engine, capability system, Signal language (28 ops) |
-| [FLUXMD.md](FLUXMD.md) | SHIPPED | Complete .flux.md format v1.0 specification — frontmatter schema, parsing rules, directive sections (fn:/agent:), code block dialects, AST node reference (10 types), compilation pipeline |
-| [FLUXVOCAB.md](FLUXVOCAB.md) | SHIPPED | Complete .fluxvocab format v1.0 specification — entry fields (pattern/expand), assembly template syntax, variable substitution, vocabulary loading, sandbox execution, compiled interpreter generation, 12 sections + 3 appendices |
-| Conformance test vectors | Pending | Bytecode test vectors all VMs must pass |
+| [SIGNAL.md](SIGNAL.md) | SHIPPED | Complete Signal Language v1.0 specification — 32 core ops, 6 protocol primitives, agent communication, parallelism, structured discourse, confidence-native, compilation model |
+| [FLUXMD.md](FLUXMD.md) | SHIPPED | Complete .flux.md format v1.0 specification — frontmatter schema, parsing rules, directive sections, code block dialects, AST node reference, compilation pipeline |
+| [FLUXVOCAB.md](FLUXVOCAB.md) | SHIPPED | Complete .fluxvocab format v1.0 specification — entry fields, assembly template syntax, variable substitution, vocabulary loading, sandbox execution, compiled interpreter generation |
 
-## ISA Statistics
+## Specification Statistics
 
-```
-Total opcode slots:   256
-Defined opcodes:      247
-Reserved slots:        9
-Confidence variants:  16
-A2A primitives:       16
-Viewpoint ops (Babel): 16
-Sensor ops (JC1):     16
-Vector/SIMD ops:      16
-Tensor/neural ops:    16
-Crypto ops:            8
-```
+| Document | Lines | Sections | Primary Author |
+|----------|-------|----------|---------------|
+| ISA.md | ~642 | 11 | Super Z |
+| FIR.md | ~1,749 | 12 | Super Z |
+| A2A.md | ~1,663 | 14 | Super Z |
+| SIGNAL.md | ~1,100 | 19 | Super Z |
+| FLUXMD.md | ~571 | 8 | Super Z |
+| FLUXVOCAB.md | ~671 | 12+3 | Super Z |
+| OPCODES.md | ~263 | 1 | Super Z |
+| **Total** | **~6,659** | | |
 
-By source attribution:
-- Converged (shared):  ~140 ops
-- Oracle1:             ~50 ops
-- JetsonClaw1:         ~50 ops
-- Babel:               16 ops
+## ISA Summary
+
+- **247 opcodes** across 17 categories
+- **Variable-length instruction encoding** (1–5 bytes, little-endian)
+- **7 instruction formats**: A (1B system) through G (5B reg+reg+imm16)
+- **Confidence-OPTIONAL** parallel register file for uncertainty propagation
+- **A2A primitives** for agent communication (TELL, ASK, DELEGATE, BROADCAST)
+- **Viewpoint ops** for cross-linguistic semantics
+- **Sensor ops** for edge hardware I/O
+- **Tensor ops** for neural network primitives
 
 ## Related Repos
 
 | Repo | Language | Purpose |
 |------|----------|---------|
-| [flux-os](https://github.com/SuperInstance/flux-os) | C | Reference ISA implementation (microkernel) |
-| [flux](https://github.com/SuperInstance/flux) | Rust | Production runtime |
 | [flux-runtime](https://github.com/SuperInstance/flux-runtime) | Python | Reference implementation + vocabulary system |
+| [flux-core](https://github.com/SuperInstance/flux-core) | Rust | Production runtime |
+| [flux-zig](https://github.com/SuperInstance/flux-zig) | Zig | Fastest VM (210ns/iter) |
+| [flux-js](https://github.com/SuperInstance/flux-js) | JavaScript | JS VM with A2A (373ns/iter) |
 | [flux-vocabulary](https://github.com/SuperInstance/flux-vocabulary) | Python | Standalone vocabulary library |
-| [flux-conformance](https://github.com/SuperInstance/flux-conformance) | JSON | Cross-runtime test suite |
 | [flux-lsp](https://github.com/SuperInstance/flux-lsp) | TypeScript | Language server |
-| [flux-ide](https://github.com/SuperInstance/flux-ide) | TypeScript | Web IDE |
+| [flux-a2a-prototype](https://github.com/SuperInstance/flux-a2a-prototype) | Python | A2A protocol research implementation |
+| [iron-to-iron](https://github.com/SuperInstance/iron-to-iron) | — | I2I agent communication protocol |
+| [git-agent-standard](https://github.com/SuperInstance/git-agent-standard) | — | Git-agent embodiment standard |
 
 ## License
 
