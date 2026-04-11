@@ -33,7 +33,7 @@
 | [FIR.md](FIR.md) | SHIPPED | Complete FIR v1.0 specification — type system (16 families), 54 instructions, SSA form, builder API, validation rules, bytecode encoding |
 | [A2A.md](A2A.md) | SHIPPED | Complete A2A Protocol v1.0 — 16 opcodes, 52-byte message format, INCREMENTS+2 trust engine, capability system, Signal language (28 ops) |
 | [FLUXMD.md](FLUXMD.md) | SHIPPED | Complete .flux.md format v1.0 specification — frontmatter schema, parsing rules, directive sections (fn:/agent:), code block dialects, AST node reference (10 types), compilation pipeline |
-| .fluxvocab interchange format | Pending | Vocabulary interchange format |
+| [FLUXVOCAB.md](FLUXVOCAB.md) | SHIPPED | Complete .fluxvocab format v1.0 specification — entry fields (pattern/expand), assembly template syntax, variable substitution, vocabulary loading, sandbox execution, compiled interpreter generation, 12 sections + 3 appendices |
 | Conformance test vectors | Pending | Bytecode test vectors all VMs must pass |
 
 ## ISA Statistics
