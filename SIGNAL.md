@@ -900,17 +900,25 @@ The compiler produces a source map (byte offset → JSON line number) for debugg
 
 ## 18. Open Questions
 
-1. **Opcode conflict at 0x60-0x69:** The flux-a2a-prototype's ISA mapping documents a FATAL collision between A2A opcodes (TELL=0x60, ASK=0x61) and Oracle1's FORMAT spec (CONF_ADD=0x60, CONF_SUB=0x61). The runtime's signal_compiler.py uses 0x50-0x5B for A2A ops, which avoids the conflict. Should the prototype's mapping be updated to match?
+> **Note on Amendment 1:** [SIGNAL-AMENDMENT-1.md](SIGNAL-AMENDMENT-1.md) proposes resolutions
+> to these open questions. As of the formal peer review (see [Issue #7](https://github.com/SuperInstance/flux-spec/issues/7)),
+> Resolution 1 (Zone Partition) has been APPROVED with deferral of specific range assignments
+> to post-convergence. Resolutions 2–6 have been DEFERRED pending further implementation
+> work. See SIGNAL-AMENDMENT-1.md for full proposals and the review document for detailed
+> verdicts. Once resolutions are approved and merged, the open questions below will be
+> updated accordingly.
 
-2. **Protocol primitives bytecode:** The discuss, synthesize, reflect, and co_iterate primitives are defined as dataclasses but do not have direct bytecode encodings. They operate at the protocol layer above the VM. Should they have VM-level opcodes for efficiency?
+1. **Opcode conflict at 0x60-0x69:** The flux-a2a-prototype's ISA mapping documents a FATAL collision between A2A opcodes (TELL=0x60, ASK=0x61) and Oracle1's FORMAT spec (CONF_ADD=0x60, CONF_SUB=0x61). The runtime's signal_compiler.py uses 0x50-0x5B for A2A ops, which avoids the conflict. Should the prototype's mapping be updated to match? **→ Resolved by SIGNAL-AMENDMENT-1 Resolution 1 (Zone Partition, APPROVED).**
 
-3. **Error handling:** No formal error handling model exists. Should Signal include try/catch/raise operations? How do runtime errors propagate through branch/fork constructs?
+2. **Protocol primitives bytecode:** The discuss, synthesize, reflect, and co_iterate primitives are defined as dataclasses but do not have direct bytecode encodings. They operate at the protocol layer above the VM. Should they have VM-level opcodes for efficiency? **→ See SIGNAL-AMENDMENT-1 Resolution 2 (DEFERRED — 0x70-0x73 collides with Babel viewpoint ops AND runtime trust ops).**
 
-4. **Type system integration:** Signal currently uses dynamic typing (any value can be in any register). Should it integrate with FIR's 16 type families for static type checking?
+3. **Error handling:** No formal error handling model exists. Should Signal include try/catch/raise operations? How do runtime errors propagate through branch/fork constructs? **→ See SIGNAL-AMENDMENT-1 Resolution 3 (DEFERRED).**
 
-5. **Network transport:** The current implementation assumes local (in-process) message passing. How should Signal programs address agents across network boundaries?
+4. **Type system integration:** Signal currently uses dynamic typing (any value can be in any register). Should it integrate with FIR's 16 type families for static type checking? **→ See SIGNAL-AMENDMENT-1 Resolution 4 (Progressive typing, DEFERRED).**
 
-6. **Persistence:** Can a Signal program serialize its state to disk and resume later? What does checkpoint/restart look like?
+5. **Network transport:** The current implementation assumes local (in-process) message passing. How should Signal programs address agents across network boundaries? **→ See SIGNAL-AMENDMENT-1 Resolution 5 (Hierarchical URI, DEFERRED).**
+
+6. **Persistence:** Can a Signal program serialize its state to disk and resume later? What does checkpoint/restart look like? **→ See SIGNAL-AMENDMENT-1 Resolution 6 (Checkpoint opcodes, DEFERRED).**
 
 ---
 

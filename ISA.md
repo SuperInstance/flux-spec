@@ -774,3 +774,22 @@ See [OPCODES.md](OPCODES.md) for the complete machine-readable opcode table gene
 ---
 
 *This specification is maintained in [flux-spec](https://github.com/SuperInstance/flux-spec). All FLUX implementations must conform to this document.*
+
+---
+
+## Appendix C: Conformance Notes
+
+**See [CONFORMANCE.md](CONFORMANCE.md) for the complete conformance guide.**
+
+### Critical Note: Runtime Divergence
+
+The Python runtime's `opcodes.py` uses a **legacy pre-convergence opcode numbering** that does NOT match this specification. For example:
+
+- Spec: `HALT = 0x00`, `NOP = 0x01`, `MOV = 0x3A`
+- Legacy: `HALT = 0x80`, `NOP = 0x00`, `MOV = 0x01`
+
+**This spec is canonical.** All new implementations and runtime updates must use the opcode values defined here. See [CONFORMANCE.md](CONFORMANCE.md) §2.1 for the full divergence table and migration path. This addresses issues [#3](https://github.com/SuperInstance/flux-spec/issues/3) and [#5](https://github.com/SuperInstance/flux-spec/issues/5).
+
+### Encoding Format Documentation
+
+The formal byte-level encoding for all seven formats (A–G) is specified in [ENCODING-FORMATS.md](ENCODING-FORMATS.md). This includes bit-level diagrams, register encoding rules, variable-length rules, and example encodings. This addresses issues [#4](https://github.com/SuperInstance/flux-spec/issues/4) and [#6](https://github.com/SuperInstance/flux-spec/issues/6).

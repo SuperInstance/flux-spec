@@ -22,7 +22,9 @@
 | [FLUX-PROGRAMS.md](FLUX-PROGRAMS.md) | SHIPPED | Five real FLUX programs with hand-crafted bytecode: Euclidean GCD, Fibonacci, Bubble Sort, Sieve of Eratosthenes, Matrix Multiplication — includes assembly, raw bytecode, correctness traces, complexity analysis |
 | [ISA-v3-ESCAPE-PREFIX.md](ISA-v3-ESCAPE-PREFIX.md) | PROPOSAL | Quill's escape prefix mechanism design — 0xFF prefix with 256 sub-opcode namespaces, extension discovery protocol, compressed shorts |
 | [ISA.md](ISA.md) | SHIPPED | Complete ISA v1.0 specification — formats, registers, memory, execution model, all 247 opcodes |
-| [OPCODES.md](OPCODES.md) | SHIPPED | Machine-readable opcode reference table (v2/v1 unified) |
+| [OPCODES.md](OPCODES.md) | SHIPPED | Machine-readable opcode reference table |
+| [ENCODING-FORMATS.md](ENCODING-FORMATS.md) | SHIPPED | Formal byte-level encoding specification — all 7 formats (A–G), bit diagrams, variable-length rules |
+| [CONFORMANCE.md](CONFORMANCE.md) | SHIPPED | Conformance guide — implementation divergence documentation, migration path, conformance levels |
 | [FIR.md](FIR.md) | SHIPPED | Complete FIR v1.0 specification — type system (16 families), 54 instructions, SSA form, builder API, validation rules, bytecode encoding |
 | [A2A.md](A2A.md) | SHIPPED | Complete A2A Protocol v1.0 — 16 opcodes, 52-byte message format, INCREMENTS+2 trust engine, capability system, Signal language (28 ops) |
 | [SIGNAL.md](SIGNAL.md) | SHIPPED | Complete Signal Language v1.0 specification — 32 core ops, 6 protocol primitives, agent communication, parallelism, structured discourse, confidence-native, compilation model |
@@ -35,10 +37,7 @@
 
 | Document | Lines | Sections | Primary Author |
 |----------|-------|----------|---------------|
-| ISA-v3.md | ~829 | 11 | Datum |
-| FLUX-PROGRAMS.md | ~579 | 5 + traces | Datum |
-| ISA-v3-ESCAPE-PREFIX.md | ~376 | 10 | Quill |
-| ISA.md | ~642 | 11 | Super Z |
+| ISA.md | ~662 | 11+3 | Super Z |
 | FIR.md | ~1,749 | 12 | Super Z |
 | A2A.md | ~1,663 | 14 | Super Z |
 | SIGNAL.md | ~1,100 | 19 | Super Z |
@@ -46,7 +45,9 @@
 | FLUXMD.md | ~571 | 8 | Super Z |
 | FLUXVOCAB.md | ~671 | 12+3 | Super Z |
 | OPCODES.md | ~263 | 1 | Super Z |
-| **Total** | **~10,043** | | |
+| ENCODING-FORMATS.md | ~1,131 | 8 | Super Z |
+| CONFORMANCE.md | ~180 | 6 | Super Z |
+| **Total** | **~8,300** | | |
 
 ## ISA Summary
 
