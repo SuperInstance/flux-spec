@@ -59,6 +59,8 @@ Every register operand occupies exactly one byte with the following bit layout:
 
 ### 2.2 Register Map
 
+> **Note — ISA Reconciliation:** The ISA specification ([ISA.md §3](ISA.md)) describes the register file as a three-bank logical model (GP R0–R15, Float F0–F15, Vector V0–V15 = 48 registers). This encoding section defines the canonical unified 64-register space (R0–R63). The three-bank model is a logical/ABI convenience view; the encoding uses R0–R63 directly. Implementations must use this 64-register unified encoding for instruction decode.
+
 | Register Range | Count | Category | ABI Convention |
 |----------------|-------|----------|----------------|
 | R0–R7 | 8 | General Purpose (GP) | Arguments, return values, scratch |
@@ -295,7 +297,7 @@ The instruction format is determined solely by the opcode byte. The following ta
 | `0xFE` | _RESERVED_ | reserved | Reserved. |
 | `0xFF` | `ILLEGAL` | system | Illegal instruction trap. |
 
-**Format A total: 19 defined + 6 reserved = 25 opcodes**
+**Format A total: 19 defined + 5 reserved = 24 opcodes**
 
 ---
 
@@ -565,7 +567,7 @@ The instruction format is determined solely by the opcode byte. The following ta
 | `0xCE` | `TDETOK` | `rd, rs1, rs2` | tensor | Detokenize: tokens `rs1`, vocab `rs2` → `rd`. |
 | `0xCF` | `TQUANT` | `rd, rs1, rs2` | tensor | Quantize: fp32 `rs1` → int8, scale `rs2`. |
 
-**Format E total: 181 opcodes** (including `0x69` and `0xA0` which are Format D, and `0xA4` which is Format G, within the E-dense ranges)
+**Format E total: 157 opcodes** (excluding `0x69` and `0xA0` which are Format D, and `0xA4` which is Format G; those are counted under their actual encoding format)
 
 ---
 
@@ -651,7 +653,7 @@ The instruction format is determined solely by the opcode byte. The following ta
 | `0xDE` | `GPU_SYNC` | `rd, rs1, imm16` | compute | GPU synchronize device `imm16`. |
 | `0xDF` | _RESERVED_ | — | reserved | Reserved. |
 
-**Format G total: 25 defined + 1 reserved = 26 opcodes**
+**Format G total: 24 defined + 1 reserved = 25 opcodes**
 
 ---
 
@@ -1080,16 +1082,14 @@ def decode_instruction(bytecode, pc):
 
 | Format | Defined | Reserved | Total |
 |--------|---------|----------|-------|
-| A | 19 | 6 | 25 |
+| A | 19 | 5 | 24 |
 | B | 8 | 0 | 8 |
 | C | 8 | 0 | 8 |
 | D | 10 | 0 | 10 |
-| E | 181 | 0 | 181 |
+| E | 157 | 0 | 157 |
 | F | 21 | 3 | 24 |
-| G | 25 | 1 | 26 |
-| **Grand Total** | **272**† | **10** | **282**† |
-
-† Some opcodes within Format E–dense ranges use Format D or G (`0x69`, `0xA0`, `0xA4`). The "Format E" count includes these by opcode range, but their actual encoding is D or G. The grand total counts each opcode once.
+| G | 24 | 1 | 25 |
+| **Grand Total** | **247** | **9** | **256** |
 
 ## Appendix B: Little-Endian Encoding Reference
 

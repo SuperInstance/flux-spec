@@ -20,6 +20,8 @@ This document is the authoritative reference for all FLUX implementations. Every
 10. [Agent-to-Agent Primitives](#10-agent-to-agent-primitives)
 11. [Conformance Requirements](#11-conformance-requirements)
 
+**Opcode Reference Subsections:** [8.1 System Control](#81-system-control-0x00-0x03-format-a) · [8.2 Interrupt/Debug](#82-interruptdebug-0x04-0x07-format-a) · [8.3 Single Register](#83-single-register-0x08-0x0f-format-b) · [8.4 Immediate](#84-immediate-0x10-0x17-format-c) · [8.5 Register + Imm8](#85-register--imm8-0x18-0x1f-format-d) · [8.6 Integer Arithmetic](#86-integer-arithmetic-0x20-0x2f-format-e) · [8.7 Float / Memory / Control](#87-float--memory--control-0x30-0x3f-format-e) · [8.8 Register + Imm16](#88-register--imm16-0x40-0x47-format-f) · [8.9 Reg + Reg + Imm16](#89-reg--reg--imm16-0x48-0x4f-format-g) · [8.10 Long Jumps / Coroutines](#810-long-jumps--coroutines--debug-0xe0-0xef-format-f) · [8.11 Extended Memory / MMIO / GPU](#811-extended-memory--mmio--gpu-0xd0-0xdf-format-g) · [8.12 Viewpoint Operations](#812-viewpoint-operations--babel-0x70-0x7f-format-e) · [8.13 Sensor / Hardware I/O](#813-sensor--hardware-io--jetsonclaw1-0x80-0x8f-format-e) · [8.14 Extended Math / Crypto](#814-extended-math--crypto-0x90-0x9f-format-e) · [8.15 Collection / Crypto](#815-collection--crypto-0xa0-0xaf-format-deg)
+
 ---
 
 ## 1. Overview
@@ -41,8 +43,8 @@ The FLUX ISA is a 256-slot instruction set designed for a stack-based virtual ma
 | Metric | Value |
 |--------|-------|
 | Total opcode slots | 256 |
-| Defined opcodes | ~240 |
-| Reserved slots | ~16 |
+| Defined opcodes | 247 |
+| Reserved slots | 9 |
 | Encoding formats | 7 (A through G) |
 | Confidence variants | 16 |
 | A2A primitives | 16 |
@@ -182,7 +184,7 @@ Two registers and one 16-bit immediate offset. Used for memory operations with d
 
 ## 3. Register File
 
-The FLUX register file contains 48 registers organized into three banks.
+The FLUX register file provides a unified 64-register encoding space (R0–R63), organized into functional categories for ABI convenience. The encoding specification ([ENCODING-FORMATS.md §2.2](ENCODING-FORMATS.md)) defines the canonical register map. The three-bank logical view below (GP, float, vector) maps directly onto this unified space: R0–R7 = argument/scratch, R8–R15 = callee-saved, R16–R31 = temporaries, R32–R47 = float, R48–R63 = vector/special.
 
 ### General-Purpose Registers (R0–R15)
 
@@ -214,6 +216,8 @@ The FLUX register file contains 48 registers organized into three banks.
 ### Vector Registers (V0–V15)
 
 16 SIMD registers, each 128 bits (16 bytes). Used for vector/SIMD operations (VLOAD, VSTORE, VADD, etc.).
+
+> **Note — Encoding Reconciliation:** The encoding specification ([ENCODING-FORMATS.md §2.2](ENCODING-FORMATS.md)) defines a unified 64-register space (R0–R63) with 6-bit register fields in the instruction encoding. The three-bank model above (GP R0–R15, Float F0–F15/R32–R47, Vector V0–V15/R48–R63) is the logical/ABI view; the canonical encoding uses R0–R63 directly. The mapping is: R0–R7 = arguments/scratch, R8–R15 = callee-saved/frame, R16–R31 = temporaries, R32–R47 = floating-point, R48–R63 = vector/special. Implementations must use the 64-register unified encoding for instruction decode.
 
 ### Confidence Register File (Parallel)
 
@@ -502,6 +506,136 @@ Four condition flags track the result of arithmetic and comparison operations:
 | 0x4D | **LEAVE** | rd, rs1, imm16 | SP += imm16; pop registers; rd = return value. Function epilogue. |
 | 0x4E | **COPY** | rd, rs1, imm16 | memcpy(rd, rs1, imm16). Copy imm16 bytes from address rs1 to rd. |
 | 0x4F | **FILL** | rd, rs1, imm16 | memset(rd, rs1, imm16). Fill imm16 bytes at address rd with value rs1. |
+
+### 8.10 Long Jumps / Coroutines / Debug (0xE0–0xEF, Format F)
+
+| Hex | Mnemonic | Operands | Description |
+|-----|----------|----------|-------------|
+| 0xE0 | **JMPL** | rd, imm16 | Long relative jump: PC += sign_extend(imm16). rd unused. |
+| 0xE1 | **JALL** | rd, imm16 | Long jump-and-link: rd = PC; PC += sign_extend(imm16). |
+| 0xE2 | **CALLL** | rd, imm16 | Long call: PUSH(PC); PC = rd + imm16. |
+| 0xE3 | **TAIL** | rd, imm16 | Tail call: pop frame; PC = rd + imm16. |
+| 0xE4 | **SWITCH** | rd, imm16 | Context switch: save state, jump imm16. |
+| 0xE5 | **COYIELD** | rd, imm16 | Coroutine yield: save state, jump to imm16. |
+| 0xE6 | **CORESUM** | rd, imm16 | Coroutine resume: restore state, jump to rd. |
+| 0xE7 | **FAULT** | rd, imm16 | Raise fault code imm16, context rd. |
+| 0xE8 | **HANDLER** | rd, imm16 | Install fault handler at PC + imm16. |
+| 0xE9 | **TRACE** | rd, imm16 | Log rd, tag imm16. |
+| 0xEA | **PROF_ON** | rd, imm16 | Start profiling region imm16. |
+| 0xEB | **PROF_OFF** | rd, imm16 | End profiling region imm16. |
+| 0xEC | **WATCH** | rd, imm16 | Watchpoint: break on write to rd + imm16. |
+
+### 8.11 Extended Memory / MMIO / GPU (0xD0–0xDF, Format G)
+
+| Hex | Mnemonic | Operands | Description |
+|-----|----------|----------|-------------|
+| 0xD0 | **DMA_CPY** | rd, rs1, imm16 | DMA copy imm16 bytes: rd ← rs1. |
+| 0xD1 | **DMA_SET** | rd, rs1, imm16 | DMA fill imm16 bytes at rd with value rs1. |
+| 0xD2 | **MMIO_R** | rd, rs1, imm16 | Memory-mapped I/O read: rd = io[rs1 + imm16]. |
+| 0xD3 | **MMIO_W** | rd, rs1, imm16 | Memory-mapped I/O write: io[rs1 + imm16] = rd. |
+| 0xD4 | **ATOMIC** | rd, rs1, imm16 | Atomic read-modify-write: rd = swap(mem[rs1+imm16], rd). |
+| 0xD5 | **CAS** | rd, rs1, imm16 | Compare-and-swap at address rs1 + imm16. |
+| 0xD6 | **FENCE** | rd, rs1, imm16 | Memory fence: type imm16 (acquire/release/full). |
+| 0xD7 | **MALLOC** | rd, rs1, imm16 | Allocate imm16 bytes on heap. Handle → rd. |
+| 0xD8 | **FREE** | rd, rs1, imm16 | Free allocation at address rd. |
+| 0xD9 | **MPROT** | rd, rs1, imm16 | Memory protect: start=rd, len=rs1, flags=imm16. |
+| 0xDA | **MCACHE** | rd, rs1, imm16 | Cache management: op=imm16, addr=rd, len=rs1. |
+| 0xDB | **GPU_LD** | rd, rs1, imm16 | GPU load to device memory, offset imm16. |
+| 0xDC | **GPU_ST** | rd, rs1, imm16 | GPU store from device memory. |
+| 0xDD | **GPU_EX** | rd, rs1, imm16 | GPU execute kernel rd, grid=rs1, block=imm16. |
+| 0xDE | **GPU_SYNC** | rd, rs1, imm16 | Synchronize GPU device imm16. |
+
+### 8.12 Viewpoint Operations — Babel (0x70–0x7F, Format E)
+
+Viewpoint operations encode cross-linguistic semantic categories from the Babel contributor. They enable agents to reason about evidentiality, epistemic stance, tense, aspect, modality, politeness, and pragmatic context — concepts that vary across human languages but can be unified for AI coordination.
+
+| Mnemonic | Operands | Semantics | Flags |
+|----------|----------|-----------|-------|
+| **V_EVID** | rd, rs1, rs2 | Classify the evidentiality (source of information) for the proposition in rs1. Source type rs2 (0=direct, 1=reported, 2=inferred, 3=hearsay) is stored in rd. Used to tag agent assertions with how the knowledge was obtained. | — |
+| **V_EPIST** | rd, rs1, rs2 | Attach an epistemic stance (certainty level) to rs1. The certainty degree rs2 (0=unknown through 1=certain) is written to rd. Enables agents to qualify beliefs explicitly rather than relying solely on confidence values. | — |
+| **V_MIR** | rd, rs1, rs2 | Mark rs1 with a mirative (unexpectedness) value. Mirativity degree rs2 (0=expected through 1=highly surprising) is stored in rd. Useful for highlighting novel information in multi-agent discourse. | — |
+| **V_NEG** | rd, rs1, rs2 | Apply negation scope to rs1. Scope type rs2 (0=predicate negation, 1=proposition negation, 2=metalinguistic negation) determines how the negation interacts with inference. Result in rd. | — |
+| **V_TENSE** | rd, rs1, rs2 | Align the temporal viewpoint of rs1. Tense marker rs2 (0=past, 1=present, 2=future, 3=anterior) is applied and the annotated result stored in rd. | — |
+| **V_ASPEC** | rd, rs1, rs2 | Set the aspectual viewpoint (completeness) for rs1. Aspect rs2 (0=perfective/completed, 1=imperfective/ongoing, 2=habitual) determines how the event is framed temporally. Result in rd. | — |
+| **V_MODAL** | rd, rs1, rs2 | Apply modal force to rs1. Modality rs2 encodes necessity/possibility (0=must, 1=should, 2=may, 3=can). Result in rd influences agent planning constraints. | — |
+| **V_POLIT** | rd, rs1, rs2 | Map rs1 to a politeness register. Level rs2 (0=formal, 1=polite, 2=casual, 3=intimate) is stored in rd. Affects how agents phrase messages in A2A communication. | — |
+| **V_HONOR** | rd, rs1, rs2 | Translate an honorific level rs2 (0=none through 3=highest) into a trust tier for agent rs1. The computed tier is stored in rd. Bridges cultural pragmatic conventions with fleet trust semantics. | — |
+| **V_TOPIC** | rd, rs1, rs2 | Bind a topic-comment structure: rs1 is the topic (what is being discussed), rs2 is the comment (new information about the topic). The bound structure handle is stored in rd. | — |
+| **V_FOCUS** | rd, rs1, rs2 | Mark information focus on rs1. Focus type rs2 (0=broad, 1=narrow, 2=contrastive) identifies which constituent carries new or contrastive information. Result in rd. | — |
+| **V_CASE** | rd, rs1, rs2 | Assign case-based scope to rs1. Case marker rs2 (0=nominative through 7=instrumental, following typological conventions) determines the grammatical role in a multi-agent coordination context. Result in rd. | — |
+| **V_AGREE** | rd, rs1, rs2 | Check grammatical agreement features between rs1 and rs2. Agreement dimensions include gender (bit 0), number (bit 1), and person (bit 2). The agreement bitmask is stored in rd. | Z |
+| **V_CLASS** | rd, rs1, rs2 | Map a classifier rs2 to a type category for rs1. Different languages use distinct classifier systems (counters, measure words); this opcode normalizes them into a shared type space stored in rd. | — |
+| **V_INFL** | rd, rs1, rs2 | Translate morphological inflection rs2 into a control-flow effect. Inflection patterns (e.g., imperative, subjunctive, conditional) modulate how the agent interprets the associated instruction. Result in rd. | — |
+| **V_PRAGMA** | rd, rs1, rs2 | Switch the pragmatic context for subsequent operations. Context rs2 selects a predefined pragmatic frame (e.g., negotiation, instruction, narrative). The previous context handle is saved to rd. | — |
+
+### 8.13 Sensor / Hardware I/O — JetsonClaw1 (0x80–0x8F, Format E)
+
+Sensor opcodes provide direct hardware I/O access for edge and robotic agents, contributed by the JetsonClaw1 platform. They abstract common peripheral protocols (I2C, SPI, UART, PWM, GPIO, CAN bus) and integrated sensors (camera, GPS, IMU, temperature).
+
+| Mnemonic | Operands | Semantics | Flags |
+|----------|----------|-----------|-------|
+| **SENSE** | rd, rs1, rs2 | Read a value from sensor rs1 on channel rs2. The sampled value is stored in rd. Blocks until data is available. | — |
+| **ACTUATE** | rd, rs1, rs2 | Write the value rd to actuator rs1 on channel rs2. Used to control motors, servos, LEDs, and other output devices. | — |
+| **SAMPLE** | rd, rs1, rs2 | Perform ADC sampling on channel rs1, averaging over rs2 readings. The averaged result is stored in rd. Higher rs2 values yield smoother readings at the cost of latency. | — |
+| **ENERGY** | rd, rs1, rs2 | Query the energy subsystem. Available energy budget (in millijoules) is stored in rd; consumed energy since last query is stored in rs1. rs2 is reserved for future use. | — |
+| **TEMP** | rd, rs1, rs2 | Read the on-board temperature sensor in millidegrees Celsius. Result stored in rd. rs1 and rs2 select the sensor instance and averaging mode respectively. | — |
+| **GPS** | rd, rs1, rs2 | Read GPS coordinates. Latitude (fixed-point Q24.8 degrees) is stored in rd; longitude in rs1. rs2 selects the fix mode (0=no-fix, 1=2D, 2=3D). | — |
+| **ACCEL** | rd, rs1, rs2 | Read 3-axis accelerometer data. X-axis (milli-g) in rd, Y-axis in rs1, Z-axis in rs2. | — |
+| **DEPTH** | rd, rs1, rs2 | Read depth or pressure sensor. Distance (mm) or pressure (Pa) stored in rd. rs1 selects sensor type; rs2 selects averaging filter. | — |
+| **CAMCAP** | rd, rs1, rs2 | Capture a camera frame. Camera index rs1 determines which camera; frame is stored into buffer rd. rs2 specifies resolution mode. Blocks until frame is acquired. | — |
+| **CAMDET** | rd, rs1, rs2 | Run object detection on image buffer rd. The number of detected objects is stored in rs1; detection metadata is written to a result buffer at address rs2. | — |
+| **PWM** | rd, rs1, rs2 | Configure PWM output on pin rs1. Duty cycle (0–255) is specified by rd; frequency in Hz by rs2. | — |
+| **GPIO** | rd, rs1, rs2 | Read or write a GPIO pin. Pin number in rs1; direction in rs2 (0=input, 1=output). For reads, the pin value is stored in rd. For writes, rd is driven onto the pin. | — |
+| **I2C** | rd, rs1, rs2 | Perform an I2C transaction. Device address in rs1, register offset in rs2. Data to write is taken from rd; on read, received data is stored in rd. | — |
+| **SPI** | rd, rs1, rs2 | Perform an SPI transaction. Send the value in rd to device with chip-select rs1. The received value is stored back in rd. rs2 specifies clock speed mode. | — |
+| **UART** | rd, rs1, rs2 | Transmit rd bytes from buffer rs1 over the UART serial port. rs2 specifies baud rate configuration. Returns bytes actually sent in rd. | Z |
+| **CANBUS** | rd, rs1, rs2 | Transmit a CAN bus frame. Message payload length in rd, CAN identifier in rs1. rs2 specifies priority and bus selection. Returns transmission status in rd. | Z |
+
+### 8.14 Extended Math / Crypto (0x90–0x9F, Format E)
+
+Extended math operations provide common transcendental functions, bit manipulation utilities, pseudorandom number generation, and cryptographic primitives essential for secure multi-agent communication.
+
+| Mnemonic | Operands | Semantics | Flags |
+|----------|----------|-----------|-------|
+| **ABS** | rd, rs1, - | Compute the absolute value of rs1. Result stored in rd. rs2 is ignored. | Z, S |
+| **SIGN** | rd, rs1, - | Extract the sign of rs1: rd = -1 if negative, 0 if zero, +1 if positive. rs2 is ignored. | Z |
+| **SQRT** | rd, rs1, - | Compute the integer square root of rs1. The largest integer n such that n² ≤ rs1 is stored in rd. rs2 is ignored. | Z |
+| **POW** | rd, rs1, rs2 | Compute rs1 raised to the power rs2. Result truncated to 32-bit integer and stored in rd. Traps on negative base with non-integer exponent. | Z, S |
+| **LOG2** | rd, rs1, - | Compute the base-2 logarithm of rs1 (integer floor). Result stored in rd. Traps if rs1 ≤ 0. rs2 is ignored. | Z |
+| **CLZ** | rd, rs1, - | Count the number of leading zero bits in rs1 (from bit 31). Result (0–32) stored in rd. rs2 is ignored. | Z |
+| **CTZ** | rd, rs1, - | Count the number of trailing zero bits in rs1 (from bit 0). Result (0–32) stored in rd. Undefined if rs1 = 0. rs2 is ignored. | Z |
+| **POPCNT** | rd, rs1, - | Count the number of set (1) bits in rs1 (population count). Result (0–32) stored in rd. rs2 is ignored. | Z |
+| **CRC32** | rd, rs1, rs2 | Compute CRC-32 checksum over rs2 bytes starting at memory address rs1. The 32-bit checksum is stored in rd. | Z |
+| **SHA256** | rd, rs1, rs2 | Compute SHA-256 hash of rs2 bytes at address rs1. The 256-bit digest is written to a 32-byte buffer whose handle is stored in rd. | — |
+| **RND** | rd, rs1, rs2 | Generate a pseudorandom integer in the inclusive range [rs1, rs2]. Result stored in rd. Uses the PRNG seeded by SEED. | — |
+| **SEED** | rd, rs1, - | Seed the pseudorandom number generator with rs1. rd is set to the previous seed value (or 0 if unset). rs2 is ignored. | — |
+| **FMOD** | rd, rs1, rs2 | Compute the floating-point remainder: rd = fmod(f(rs1), f(rs2)). The result has the same sign as f(rs1). | Z |
+| **FSQRT** | rd, rs1, - | Compute the IEEE 754 single-precision square root of f(rs1). Result stored in rd. Traps if f(rs1) < 0. rs2 is ignored. | Z |
+| **FSIN** | rd, rs1, - | Compute the IEEE 754 single-precision sine of f(rs1) (interpreted as radians). Result stored in rd. rs2 is ignored. | Z |
+| **FCOS** | rd, rs1, - | Compute the IEEE 754 single-precision cosine of f(rs1) (interpreted as radians). Result stored in rd. rs2 is ignored. | Z |
+
+### 8.15 Collection / Crypto (0xA0–0xAF, Format D/E/G)
+
+Collection opcodes provide higher-level data structure operations (concatenation, indexing, slicing, sorting, mapping, filtering) and cryptographic primitives (hashing, HMAC, signing, encryption, key generation). Note that `LEN` (0xA0) uses Format D and `SLICE` (0xA4) uses Format G; all others use Format E.
+
+| Mnemonic | Operands | Semantics | Flags |
+|----------|----------|-----------|-------|
+| **LEN** | rd, imm8 | (Format D) Load the length of the collection at memory address imm8 into rd. Works for strings, lists, and byte arrays. | Z |
+| **CONCAT** | rd, rs1, rs2 | Concatenate collection rs1 with collection rs2. A new collection is allocated and its handle stored in rd. Original collections are not modified. | — |
+| **AT** | rd, rs1, rs2 | Index into collection rs1 at position rs2 (0-based). The element value is stored in rd. Traps if rs2 is out of bounds. | — |
+| **SETAT** | rd, rs1, rs2 | Set element at index rs2 of collection rs1 to value rd. Traps if rs2 is out of bounds. Returns the previous value in rd (if applicable). | — |
+| **SLICE** | rd, rs1, imm16 | (Format G) Extract a sub-collection from rs1, from index 0 to imm16 (exclusive). A new collection handle is stored in rd. Traps if imm16 exceeds the collection length. | — |
+| **REDUCE** | rd, rs1, rs2 | Reduce (fold) collection rs1 using the binary function at address rs2. The accumulator result is stored in rd. The function takes (accumulator, element) and returns the new accumulator. | — |
+| **MAP** | rd, rs1, rs2 | Apply the function at address rs2 to each element of collection rs1. A new collection with the transformed elements is stored in rd. | — |
+| **FILTER** | rd, rs1, rs2 | Filter collection rs1 using the predicate function at address rs2. A new collection containing only elements for which the predicate returns non-zero is stored in rd. | — |
+| **SORT** | rd, rs1, rs2 | Sort collection rs1 in ascending order using the comparator function at address rs2. The sorted result (new collection) is stored in rd. | — |
+| **FIND** | rd, rs1, rs2 | Search collection rs1 for element rs2. If found, the 0-based index is stored in rd; otherwise rd = -1. | Z |
+| **HASH** | rd, rs1, rs2 | Compute a cryptographic hash of the data at memory address rs1 (rs2 bytes). Algorithm is selected by the lower bits of rs2 (0=SHA-256). The digest handle is stored in rd. | — |
+| **HMAC** | rd, rs1, rs2 | Compute an HMAC over the data at memory address rs1 using the key at memory address rs2. The HMAC digest handle is stored in rd. | — |
+| **VERIFY** | rd, rs1, rs2 | Verify a digital signature. The signature is at memory address rs2; the signed data is at address rs1. Returns 1 in rd if valid, 0 if invalid. | Z |
+| **ENCRYPT** | rd, rs1, rs2 | Encrypt the data at memory address rs1 using the key at address rs2. The ciphertext handle is stored in rd. Uses AES-256-GCM by default. | — |
+| **DECRYPT** | rd, rs1, rs2 | Decrypt the ciphertext at memory address rs1 using the key at address rs2. The plaintext handle is stored in rd. Traps if authentication fails (for AEAD modes). | — |
+| **KEYGEN** | rd, rs1, rs2 | Generate a cryptographic key pair. The public key handle is stored in rs1; the private key handle in rs2. The key type identifier is stored in rd. | — |
 
 ---
 
