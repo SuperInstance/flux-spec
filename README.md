@@ -1,5 +1,10 @@
 # flux-spec
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
+
 **The canonical FLUX language specification.** All implementations must conform to this spec.
 
 ## What This Defines
